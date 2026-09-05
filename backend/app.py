@@ -132,6 +132,15 @@ def api_monthly():
     return jsonify(rows)
 
 
+@app.route("/api/weekly")
+def api_weekly():
+    rows = query(
+        "SELECT week, brand, interest FROM interest_over_time "
+        "ORDER BY week, brand"
+    )
+    return jsonify(rows)
+
+
 @app.route("/api/provinces")
 def api_provinces():
     rows = query(

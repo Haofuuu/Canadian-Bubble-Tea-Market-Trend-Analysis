@@ -16,7 +16,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
@@ -35,9 +35,15 @@ body {
     padding: 0 24px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 16px;
 }
 .header h1 { font-size: 22px; font-weight: 700; }
+.header p {
+    margin-top: 2px;
+    font-size: 13px;
+    color: rgba(255,255,255,.78);
+}
 .header-badge {
     background: rgba(255,255,255,.2);
     padding: 4px 14px;
@@ -64,11 +70,11 @@ body {
     border-radius: var(--radius);
     padding: 20px 24px;
     box-shadow: var(--shadow);
-    text-align: center;
+    text-align: left;
     border-top: 3px solid var(--primary);
 }
 .kpi-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--primary);
 }
@@ -76,6 +82,21 @@ body {
     font-size: 13px;
     color: var(--text-secondary);
     margin-top: 4px;
+}
+.kpi-detail {
+    min-height: 20px;
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.error-message {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius);
+    background: #fef2f2;
+    color: #991b1b;
 }
 
 /* ── Chart Grid ───────────────────────────────── */
@@ -95,14 +116,19 @@ body {
     font-size: 15px;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+}
+.chart-note {
+    min-height: 20px;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+    font-size: 12px;
 }
 .chart-box {
     width: 100%;
     height: 380px;
 }
+.chart-box-tall { height: 650px; }
 
 /* ── Footer ───────────────────────────────────── */
 .footer {
@@ -119,6 +145,6 @@ body {
 }
 @media (max-width: 500px) {
     .kpi-row { grid-template-columns: 1fr; }
+    .header-inner { align-items: flex-start; flex-direction: column; }
     .header h1 { font-size: 17px; }
 }
-

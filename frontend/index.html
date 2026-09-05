@@ -1,88 +1,80 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>霸王茶姬 - 销量数据分析平台</title>
+    <title>Canadian Bubble Tea Brand Trends</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
 <body>
     <header class="header">
         <div class="header-inner">
-            <h1>霸王茶姬 销量数据分析平台</h1>
-            <span class="header-badge">2025 全年数据</span>
+            <div>
+                <h1>Canadian Bubble Tea Brand Trends</h1>
+                <p>Google search interest across five brands</p>
+            </div>
+            <span class="header-badge">Canada · 2022–2026</span>
         </div>
     </header>
 
     <main class="container">
-        <!-- KPI 卡片 -->
         <section class="kpi-row">
-            <div class="kpi-card" id="kpi-qty">
+            <div class="kpi-card" id="kpi-overall">
                 <div class="kpi-value">--</div>
-                <div class="kpi-label">总销量 (杯)</div>
+                <div class="kpi-label">Overall Leading Brand</div>
+                <div class="kpi-detail">--</div>
             </div>
-            <div class="kpi-card" id="kpi-rev">
+            <div class="kpi-card" id="kpi-current">
                 <div class="kpi-value">--</div>
-                <div class="kpi-label">总营收 (元)</div>
+                <div class="kpi-label">Current Leading Brand</div>
+                <div class="kpi-detail">--</div>
             </div>
-            <div class="kpi-card" id="kpi-records">
+            <div class="kpi-card" id="kpi-growth">
                 <div class="kpi-value">--</div>
-                <div class="kpi-label">记录条数</div>
+                <div class="kpi-label">Fastest-Growing Brand</div>
+                <div class="kpi-detail">--</div>
             </div>
-            <div class="kpi-card" id="kpi-member">
+            <div class="kpi-card" id="kpi-peak">
                 <div class="kpi-value">--</div>
-                <div class="kpi-label">平均会员占比</div>
+                <div class="kpi-label">Highest-Interest Week</div>
+                <div class="kpi-detail">--</div>
             </div>
         </section>
 
-        <!-- 图表区域 -->
+        <div id="dashboard-error" class="error-message" hidden></div>
+
         <section class="chart-grid">
             <div class="chart-card span-full">
-                <h3>月度销量与营收趋势</h3>
+                <h3>Monthly Search Interest</h3>
+                <p class="chart-note">Monthly average of weekly Google Trends scores</p>
                 <div id="chart-monthly" class="chart-box"></div>
             </div>
-            <div class="chart-card">
-                <h3>产品销量排名</h3>
-                <div id="chart-product" class="chart-box"></div>
+            <div class="chart-card span-full">
+                <h3>Seasonal Search Interest</h3>
+                <p class="chart-note">Average weekly interest by calendar month across all available years</p>
+                <div id="chart-seasonality" class="chart-box"></div>
             </div>
             <div class="chart-card">
-                <h3>产品类别占比</h3>
-                <div id="chart-category" class="chart-box"></div>
+                <h3>Brand Momentum</h3>
+                <p class="chart-note">Latest 3 months compared with the previous 3 months</p>
+                <div id="chart-momentum" class="chart-box"></div>
             </div>
             <div class="chart-card">
-                <h3>城市销量排名</h3>
-                <div id="chart-city" class="chart-box"></div>
-            </div>
-            <div class="chart-card">
-                <h3>季节销量对比</h3>
-                <div id="chart-season" class="chart-box"></div>
-            </div>
-            <div class="chart-card">
-                <h3>天气对销量影响</h3>
-                <div id="chart-weather" class="chart-box"></div>
-            </div>
-            <div class="chart-card">
-                <h3>营销活动效果</h3>
-                <div id="chart-campaign" class="chart-box"></div>
+                <h3>Brand Mix by Province</h3>
+                <p class="chart-note">Share among the five compared brands</p>
+                <div id="chart-province-stacked" class="chart-box"></div>
             </div>
             <div class="chart-card span-full">
-                <h3>城市 x 产品 热力图</h3>
-                <div id="chart-heatmap" class="chart-box" style="height:500px"></div>
-            </div>
-            <div class="chart-card">
-                <h3>节假日 vs 非节假日</h3>
-                <div id="chart-holiday" class="chart-box"></div>
-            </div>
-            <div class="chart-card">
-                <h3>折扣对销量影响</h3>
-                <div id="chart-discount" class="chart-box"></div>
+                <h3>City × Brand</h3>
+                <p class="chart-note">Cities with measurable interest for at least three brands</p>
+                <div id="chart-city-heatmap" class="chart-box chart-box-tall"></div>
             </div>
         </section>
     </main>
 
     <footer class="footer">
-        <p>霸王茶姬销量数据分析平台 &copy; 2025 | 数据仅供参考</p>
+        <p>Values represent normalized search interest, not sales or search volume. Source: Google Trends.</p>
     </footer>
     <script src="/js/charts.js"></script>
 </body>

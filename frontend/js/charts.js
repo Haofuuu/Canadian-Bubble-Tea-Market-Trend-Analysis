@@ -1,169 +1,219 @@
 /**
- * 霸王茶姬销量数据分析 - ECharts 图表
+ * Canadian bubble tea brand trends dashboard.
  */
 
-const purple = "#7c3aed";
-const orange = "#f97316";
-const palette = ["#7c3aed","#f97316","#06b6d4","#10b981","#f43f5e","#8b5cf6","#eab308","#ec4899","#14b8a6","#6366f1"];
+const brandColors = {
+    "Chatime": "#7c3aed",
+    "Gong Cha": "#f97316",
+    "CoCo Fresh Tea & Juice": "#06b6d4",
+    "Molly Tea": "#10b981",
+    "HEYTEA": "#f43f5e"
+};
 
-function fmt(n) { return n == null ? "--" : Number(n).toLocaleString("zh-CN"); }
+const charts = [];
 
-// ── KPI ────────────────────────────────────────
-fetch("/api/summary").then(r=>r.json()).then(d=>{
-    document.querySelector("#kpi-qty .kpi-value").textContent = fmt(d.total_qty);
-    document.querySelector("#kpi-rev .kpi-value").textContent = fmt(d.total_revenue);
-    document.querySelector("#kpi-records .kpi-value").textContent = fmt(d.total_records);
-    document.querySelector("#kpi-member .kpi-value").textContent = d.avg_member != null ? d.avg_member.toFixed(1) + "%" : "--";
-});
+function average(values) {
+    return values.reduce((total, value) => total + value, 0) / values.length;
+}
 
-// ── 月度趋势 ──────────────────────────────────
-fetch("/api/monthly").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-monthly"));
-    c.setOption({
+function valueFor(rows, locationKey, location, brand) {
+    const row = rows.find(item => item[locationKey] === location && item.brand === brand);
+    return row ? row.interest : null;
+}
+
+function createChart(elementId, option) {
+    const chart = echarts.init(document.getElementById(elementId));
+    chart.setOption({
+        animationDuration: 500,
+        textStyle: { fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" },
+        aria: { enabled: true },
+        ...option
+    });
+    charts.push(chart);
+}
+
+function setCard(id, value, detail) {
+    document.querySelector(`#${id} .kpi-value`).textContent = value;
+    document.querySelector(`#${id} .kpi-detail`).textContent = detail;
+}
+
+function renderCards(weekly, monthly, brands, months) {
+    const overall = brands.map(brand => ({
+        brand,
+        interest: average(weekly.filter(row => row.brand === brand).map(row => row.interest))
+    })).sort((a, b) => b.interest - a.interest)[0];
+
+    const latestMonth = months[months.length - 1];
+    const current = monthly.filter(row => row.month === latestMonth)
+        .sort((a, b) => b.interest - a.interest)[0];
+
+    const recentMonths = months.slice(-3);
+    const previousMonths = months.slice(-6, -3);
+    const growth = brands.map(brand => {
+        const recent = average(monthly.filter(row => row.brand === brand && recentMonths.includes(row.month)).map(row => row.interest));
+        const previous = average(monthly.filter(row => row.brand === brand && previousMonths.includes(row.month)).map(row => row.interest));
+        return { brand, change: ((recent - previous) / previous) * 100 };
+    }).sort((a, b) => b.change - a.change)[0];
+
+    const peak = weekly.reduce((highest, row) => row.interest > highest.interest ? row : highest);
+
+    setCard("kpi-overall", overall.brand, `${overall.interest.toFixed(1)} average interest`);
+    setCard("kpi-current", current.brand, `${latestMonth} · ${current.interest.toFixed(1)} points`);
+    setCard("kpi-growth", growth.brand, `${growth.change >= 0 ? "+" : ""}${growth.change.toFixed(1)}% over 3 months`);
+    setCard("kpi-peak", peak.brand, `${peak.interest.toFixed(0)} · Week of ${peak.week}`);
+}
+
+function renderMonthly(monthly, brands, months) {
+    createChart("chart-monthly", {
+        color: brands.map(brand => brandColors[brand]),
         tooltip: { trigger: "axis" },
-        legend: { data: ["销量(杯)", "营收(元)"] },
-        xAxis: { type: "category", data: d.map(r=>r.month), axisLabel:{rotate:30} },
-        yAxis: [
-            { type: "value", name: "销量" },
-            { type: "value", name: "营收" }
-        ],
-        series: [
-            { name:"销量(杯)", type:"line", data:d.map(r=>r.qty), smooth:true, itemStyle:{color:purple} },
-            { name:"营收(元)", type:"bar", yAxisIndex:1, data:d.map(r=>r.revenue), itemStyle:{color:orange}, barWidth:24 }
-        ],
-        grid: { left:60, right:60, bottom:50, top:50 }
+        legend: { top: 4 },
+        grid: { left: 52, right: 24, top: 58, bottom: 50 },
+        xAxis: { type: "category", data: months, axisLabel: { rotate: 35 } },
+        yAxis: { type: "value", name: "Interest", min: 0 },
+        series: brands.map(brand => ({
+            name: brand,
+            type: "line",
+            smooth: true,
+            symbolSize: 5,
+            data: months.map(month => {
+                const row = monthly.find(item => item.month === month && item.brand === brand);
+                return row ? row.interest : null;
+            })
+        }))
     });
-    window.addEventListener("resize", ()=>c.resize());
-});
+}
 
-// ── 产品排名 ──────────────────────────────────
-fetch("/api/product_rank").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-product"));
-    c.setOption({
-        tooltip: { trigger:"axis" },
-        xAxis: { type:"value" },
-        yAxis: { type:"category", data:d.map(r=>r.product).reverse(), axisLabel:{width:80,overflow:"truncate"} },
-        series: [{ type:"bar", data:d.map(r=>r.qty).reverse(), itemStyle:{color:purple}, barWidth:18, label:{show:true,position:"right",formatter:"{c}"} }],
-        grid: { left:110, right:60, top:10, bottom:20 }
+function renderSeasonality(weekly, brands) {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    createChart("chart-seasonality", {
+        color: brands.map(brand => brandColors[brand]),
+        tooltip: { trigger: "axis" },
+        legend: { top: 4 },
+        grid: { left: 52, right: 24, top: 58, bottom: 38 },
+        xAxis: { type: "category", data: monthNames },
+        yAxis: { type: "value", name: "Average interest", min: 0 },
+        series: brands.map(brand => ({
+            name: brand,
+            type: "line",
+            smooth: true,
+            symbolSize: 7,
+            data: monthNames.map((month, index) => {
+                const monthNumber = String(index + 1).padStart(2, "0");
+                const values = weekly
+                    .filter(row => row.brand === brand && row.week.slice(5, 7) === monthNumber)
+                    .map(row => row.interest);
+                return Number(average(values).toFixed(1));
+            })
+        }))
     });
-    window.addEventListener("resize", ()=>c.resize());
-});
+}
 
-// ── 类别饼图 ──────────────────────────────────
-fetch("/api/category_pie").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-category"));
-    c.setOption({
-        tooltip: { trigger:"item", formatter:"{b}: {c}杯 ({d}%)" },
+function renderMomentum(monthly, brands, months) {
+    const recentMonths = months.slice(-3);
+    const previousMonths = months.slice(-6, -3);
+    const momentum = brands.map(brand => {
+        const recent = average(monthly.filter(row => row.brand === brand && recentMonths.includes(row.month)).map(row => row.interest));
+        const previous = average(monthly.filter(row => row.brand === brand && previousMonths.includes(row.month)).map(row => row.interest));
+        return { brand, change: Number((((recent - previous) / previous) * 100).toFixed(1)) };
+    }).sort((a, b) => a.change - b.change);
+
+    createChart("chart-momentum", {
+        tooltip: { trigger: "axis", valueFormatter: value => `${value}%` },
+        grid: { left: 128, right: 38, top: 22, bottom: 34 },
+        xAxis: { type: "value", name: "% change", axisLabel: { formatter: "{value}%" } },
+        yAxis: { type: "category", data: momentum.map(item => item.brand) },
         series: [{
-            type:"pie", radius:["40%","70%"], center:["50%","55%"],
-            data: d.map((r,i)=>({ name:r.category, value:r.qty, itemStyle:{color:palette[i]} })),
-            label: { formatter:"{b}\n{d}%" }
+            type: "bar",
+            data: momentum.map(item => ({
+                value: item.change,
+                itemStyle: { color: item.change >= 0 ? "#10b981" : "#ef4444" }
+            })),
+            label: { show: true, position: "right", formatter: "{c}%" }
         }]
     });
-    window.addEventListener("resize", ()=>c.resize());
-});
+}
 
-// ── 城市排名 ──────────────────────────────────
-fetch("/api/city_rank").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-city"));
-    c.setOption({
-        tooltip: { trigger:"axis" },
-        xAxis: { type:"category", data:d.map(r=>r.city), axisLabel:{rotate:35} },
-        yAxis: { type:"value", name:"营收(元)" },
-        series: [{ type:"bar", data:d.map(r=>r.revenue), itemStyle:{color:purple}, barWidth:20, label:{show:true,position:"top",fontSize:10} }],
-        grid: { left:60, right:20, bottom:50, top:30 }
+function renderProvinceStacked(provinceRows, brands, provinces) {
+    createChart("chart-province-stacked", {
+        color: brands.map(brand => brandColors[brand]),
+        tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: value => value == null ? "No data" : `${value}%` },
+        legend: { top: 0, type: "scroll" },
+        grid: { left: 128, right: 20, top: 58, bottom: 28 },
+        xAxis: { type: "value", max: 100, axisLabel: { formatter: "{value}%" } },
+        yAxis: { type: "category", data: provinces },
+        series: brands.map(brand => ({
+            name: brand,
+            type: "bar",
+            stack: "total",
+            data: provinces.map(province => valueFor(provinceRows, "province", province, brand)),
+            label: {
+                show: true,
+                formatter: params => params.value >= 10 ? `${params.value}%` : ""
+            }
+        }))
     });
-    window.addEventListener("resize", ()=>c.resize());
-});
+}
 
-// ── 季节对比 ──────────────────────────────────
-fetch("/api/season").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-season"));
-    const order = ["春季","夏季","秋季","冬季"];
-    d.sort((a,b)=>order.indexOf(a.season)-order.indexOf(b.season));
-    c.setOption({
-        tooltip: { trigger:"axis" },
-        xAxis: { type:"category", data:d.map(r=>r.season) },
-        yAxis: { type:"value" },
+function renderHeatmap(elementId, rows, locationKey, locations, brands) {
+    const data = [];
+    rows.forEach(row => {
+        const x = brands.indexOf(row.brand);
+        const y = locations.indexOf(row[locationKey]);
+        if (x >= 0 && y >= 0) {
+            data.push([x, y, row.interest]);
+        }
+    });
+
+    createChart(elementId, {
+        tooltip: {
+            formatter: params => `${locations[params.data[1]]}<br>${brands[params.data[0]]}: ${params.data[2]}%`
+        },
+        grid: { left: 128, right: 35, top: 28, bottom: 42 },
+        xAxis: { type: "category", data: brands, axisLabel: { rotate: 25 } },
+        yAxis: { type: "category", data: locations },
+        visualMap: {
+            show: false,
+            min: 0,
+            max: 100,
+            inRange: { color: ["#f5f3ff", "#c4b5fd", "#7c3aed", "#3b0764"] }
+        },
         series: [{
-            type:"bar", data:d.map((r,i)=>({ value:r.qty, itemStyle:{color:palette[i]} })),
-            barWidth:40, label:{show:true,position:"top",formatter:"{c}杯"}
-        }],
-        grid: { left:60, right:20, bottom:20, top:30 }
+            type: "heatmap",
+            data,
+            label: { show: true, formatter: params => params.data[2] < 1 ? "<1" : params.data[2] }
+        }]
     });
-    window.addEventListener("resize", ()=>c.resize());
+}
+
+Promise.all([
+    fetch("/api/weekly").then(response => response.json()),
+    fetch("/api/monthly").then(response => response.json()),
+    fetch("/api/provinces").then(response => response.json()),
+    fetch("/api/cities").then(response => response.json())
+]).then(([weekly, monthly, provinceRows, cityRows]) => {
+    const brands = [...new Set(monthly.map(row => row.brand))];
+    const months = [...new Set(monthly.map(row => row.month))];
+    const provinces = [...new Set(provinceRows.map(row => row.province))].sort();
+
+    const cityCounts = {};
+    cityRows.forEach(row => {
+        cityCounts[row.city] = (cityCounts[row.city] || 0) + 1;
+    });
+    const cities = Object.keys(cityCounts).filter(city => cityCounts[city] >= 3).sort();
+
+    renderCards(weekly, monthly, brands, months);
+    renderMonthly(monthly, brands, months);
+    renderSeasonality(weekly, brands);
+    renderMomentum(monthly, brands, months);
+    renderProvinceStacked(provinceRows, brands, provinces);
+    renderHeatmap("chart-city-heatmap", cityRows, "city", cities, brands);
+}).catch(error => {
+    console.error(error);
+    const message = document.getElementById("dashboard-error");
+    message.hidden = false;
+    message.textContent = "The dashboard data could not be loaded. Please confirm that the Flask server is running.";
 });
 
-// ── 天气影响 ──────────────────────────────────
-fetch("/api/weather").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-weather"));
-    c.setOption({
-        tooltip: { trigger:"axis" },
-        xAxis: { type:"category", data:d.map(r=>r.weather) },
-        yAxis: { type:"value", name:"平均销量" },
-        series: [{ type:"bar", data:d.map((r,i)=>({ value:Math.round(r.avg_qty), itemStyle:{color:palette[i%palette.length]} })), barWidth:28, label:{show:true,position:"top"} }],
-        grid: { left:50, right:20, bottom:20, top:30 }
-    });
-    window.addEventListener("resize", ()=>c.resize());
-});
-
-// ── 营销活动 ──────────────────────────────────
-fetch("/api/campaign").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-campaign"));
-    c.setOption({
-        tooltip: { trigger:"axis" },
-        xAxis: { type:"category", data:d.map(r=>r.campaign), axisLabel:{rotate:35,fontSize:11} },
-        yAxis: { type:"value", name:"平均销量" },
-        series: [{ type:"bar", data:d.map((r,i)=>({ value:Math.round(r.avg_qty), itemStyle:{color:palette[i%palette.length]} })), barWidth:24, label:{show:true,position:"top"} }],
-        grid: { left:50, right:20, bottom:70, top:30 }
-    });
-    window.addEventListener("resize", ()=>c.resize());
-});
-
-// ── 热力图 ────────────────────────────────────
-fetch("/api/city_product").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-heatmap"));
-    const max = Math.max(...d.data.map(v=>v[2]));
-    c.setOption({
-        tooltip: { formatter: p => `${d.cities[p.data[1]]} - ${d.products[p.data[0]]}<br/>销量: ${p.data[2]}杯` },
-        xAxis: { type:"category", data:d.products, axisLabel:{rotate:30,fontSize:11}, splitArea:{show:true} },
-        yAxis: { type:"category", data:d.cities, splitArea:{show:true} },
-        visualMap: { min:0, max, calculable:true, orient:"horizontal", left:"center", bottom:0, inRange:{ color:["#f3e8ff",purple,"#3b0764"] } },
-        series: [{ type:"heatmap", data:d.data, label:{show:true,fontSize:10}, emphasis:{itemStyle:{shadowBlur:10,shadowColor:"rgba(0,0,0,.5)"}} }],
-        grid: { left:80, right:20, bottom:60, top:10 }
-    });
-    window.addEventListener("resize", ()=>c.resize());
-});
-
-// ── 节假日对比 ────────────────────────────────
-fetch("/api/holiday").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-holiday"));
-    c.setOption({
-        tooltip: { trigger:"axis" },
-        legend: { bottom:0 },
-        xAxis: { type:"category", data:d.map(r=>r.is_holiday==="是"?"节假日":"工作日") },
-        yAxis: [
-            { type:"value", name:"平均销量" },
-            { type:"value", name:"平均营收" }
-        ],
-        series: [
-            { name:"平均销量", type:"bar", data:d.map(r=>Math.round(r.avg_qty)), itemStyle:{color:purple}, barWidth:36 },
-            { name:"平均营收", type:"bar", yAxisIndex:1, data:d.map(r=>Math.round(r.avg_revenue)), itemStyle:{color:orange}, barWidth:36 }
-        ],
-        grid: { left:60, right:60, bottom:40, top:20 }
-    });
-    window.addEventListener("resize", ()=>c.resize());
-});
-
-// ── 折扣分析 ──────────────────────────────────
-fetch("/api/discount").then(r=>r.json()).then(d=>{
-    const c = echarts.init(document.getElementById("chart-discount"));
-    c.setOption({
-        tooltip: { trigger:"axis" },
-        xAxis: { type:"category", data:d.map(r=> r.discount===0?"原价":Math.round((1-r.discount)*10)+"折"), axisLabel:{rotate:20} },
-        yAxis: { type:"value", name:"平均销量" },
-        series: [{ type:"bar", data:d.map((r,i)=>({ value:Math.round(r.avg_qty), itemStyle:{color:palette[i]} })), barWidth:36, label:{show:true,position:"top"} }],
-        grid: { left:50, right:20, bottom:40, top:20 }
-    });
-    window.addEventListener("resize", ()=>c.resize());
-});
+window.addEventListener("resize", () => charts.forEach(chart => chart.resize()));
