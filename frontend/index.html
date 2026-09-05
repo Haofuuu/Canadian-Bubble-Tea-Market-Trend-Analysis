@@ -56,8 +56,16 @@
                 <div id="chart-seasonality" class="chart-box"></div>
             </div>
             <div class="chart-card">
-                <h3>Brand Momentum</h3>
-                <p class="chart-note">Latest 3 months compared with the previous 3 months</p>
+                <div class="chart-card-header">
+                    <div>
+                        <h3>Brand Momentum</h3>
+                        <p id="momentum-note" class="chart-note">Latest 3 months compared with the previous 3 months</p>
+                    </div>
+                    <div class="period-toggle" role="group" aria-label="Brand momentum period">
+                        <button class="period-button active" type="button" data-months="3" aria-pressed="true">3 months</button>
+                        <button class="period-button" type="button" data-months="12" aria-pressed="false">12 months</button>
+                    </div>
+                </div>
                 <div id="chart-momentum" class="chart-box"></div>
             </div>
             <div class="chart-card">

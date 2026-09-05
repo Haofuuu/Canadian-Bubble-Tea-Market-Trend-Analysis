@@ -30,6 +30,7 @@ function createChart(elementId, option) {
         ...option
     });
     charts.push(chart);
+    return chart;
 }
 
 function setCard(id, value, detail) {
@@ -47,8 +48,8 @@ function renderCards(weekly, monthly, brands, months) {
     const current = monthly.filter(row => row.month === latestMonth)
         .sort((a, b) => b.interest - a.interest)[0];
 
-    const recentMonths = months.slice(-3);
-    const previousMonths = months.slice(-6, -3);
+    const recentMonths = months.slice(-12);
+    const previousMonths = months.slice(-24, -12);
     const growth = brands.map(brand => {
         const recent = average(monthly.filter(row => row.brand === brand && recentMonths.includes(row.month)).map(row => row.interest));
         const previous = average(monthly.filter(row => row.brand === brand && previousMonths.includes(row.month)).map(row => row.interest));
@@ -59,7 +60,7 @@ function renderCards(weekly, monthly, brands, months) {
 
     setCard("kpi-overall", overall.brand, `${overall.interest.toFixed(1)} average interest`);
     setCard("kpi-current", current.brand, `${latestMonth} · ${current.interest.toFixed(1)} points`);
-    setCard("kpi-growth", growth.brand, `${growth.change >= 0 ? "+" : ""}${growth.change.toFixed(1)}% over 3 months`);
+    setCard("kpi-growth", growth.brand, `${growth.change >= 0 ? "+" : ""}${growth.change.toFixed(1)}% over 12 months`);
     setCard("kpi-peak", peak.brand, `${peak.interest.toFixed(0)} · Week of ${peak.week}`);
 }
 
@@ -110,16 +111,18 @@ function renderSeasonality(weekly, brands) {
     });
 }
 
-function renderMomentum(monthly, brands, months) {
-    const recentMonths = months.slice(-3);
-    const previousMonths = months.slice(-6, -3);
+let momentumChart;
+
+function renderMomentum(monthly, brands, months, period) {
+    const recentMonths = months.slice(-period);
+    const previousMonths = months.slice(-(period * 2), -period);
     const momentum = brands.map(brand => {
         const recent = average(monthly.filter(row => row.brand === brand && recentMonths.includes(row.month)).map(row => row.interest));
         const previous = average(monthly.filter(row => row.brand === brand && previousMonths.includes(row.month)).map(row => row.interest));
         return { brand, change: Number((((recent - previous) / previous) * 100).toFixed(1)) };
     }).sort((a, b) => a.change - b.change);
 
-    createChart("chart-momentum", {
+    const option = {
         tooltip: { trigger: "axis", valueFormatter: value => `${value}%` },
         grid: { left: 128, right: 38, top: 22, bottom: 34 },
         xAxis: { type: "value", name: "% change", axisLabel: { formatter: "{value}%" } },
@@ -132,7 +135,16 @@ function renderMomentum(monthly, brands, months) {
             })),
             label: { show: true, position: "right", formatter: "{c}%" }
         }]
-    });
+    };
+
+    document.getElementById("momentum-note").textContent =
+        `Latest ${period} months compared with the previous ${period} months`;
+
+    if (momentumChart) {
+        momentumChart.setOption(option, true);
+    } else {
+        momentumChart = createChart("chart-momentum", option);
+    }
 }
 
 function renderProvinceStacked(provinceRows, brands, provinces) {
@@ -206,7 +218,17 @@ Promise.all([
     renderCards(weekly, monthly, brands, months);
     renderMonthly(monthly, brands, months);
     renderSeasonality(weekly, brands);
-    renderMomentum(monthly, brands, months);
+    renderMomentum(monthly, brands, months, 3);
+    document.querySelectorAll(".period-button").forEach(button => {
+        button.addEventListener("click", () => {
+            document.querySelectorAll(".period-button").forEach(item => {
+                const isActive = item === button;
+                item.classList.toggle("active", isActive);
+                item.setAttribute("aria-pressed", isActive);
+            });
+            renderMomentum(monthly, brands, months, Number(button.dataset.months));
+        });
+    });
     renderProvinceStacked(provinceRows, brands, provinces);
     renderHeatmap("chart-city-heatmap", cityRows, "city", cities, brands);
 }).catch(error => {
