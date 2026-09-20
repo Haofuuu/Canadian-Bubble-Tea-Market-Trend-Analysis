@@ -62,8 +62,7 @@ Open [http://localhost:8080](http://localhost:8080) in your browser. The app cre
 ```text
 .
 ├── backend/
-│   ├── app.py                 # Flask server, data import, and JSON endpoints
-│   └── forecasting/           # Experimental helpers; not used by the dashboard
+│   └── app.py                 # Flask server, data import, and JSON endpoints
 ├── data/
 │   ├── interest_over_time.csv
 │   ├── interest_by_province.csv
