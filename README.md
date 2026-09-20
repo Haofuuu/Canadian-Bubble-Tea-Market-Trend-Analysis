@@ -20,7 +20,6 @@ Bubble Tea Signals turns Google Trends data into a focused view of brand demand,
 - **Data layer:** SQLite, generated from the included CSV files at startup
 - **Frontend:** semantic HTML, responsive CSS, and vanilla JavaScript
 - **Visualization:** Apache ECharts
-- **Analysis:** pandas, NumPy, scikit-learn, and statsmodels foundations for forecasting work
 
 ## Getting started
 
@@ -64,7 +63,7 @@ Open [http://localhost:8080](http://localhost:8080) in your browser. The app cre
 .
 ├── backend/
 │   ├── app.py                 # Flask server, data import, and JSON endpoints
-│   └── forecasting/           # Reusable data loading and baseline models
+│   └── forecasting/           # Experimental helpers; not used by the dashboard
 ├── data/
 │   ├── interest_over_time.csv
 │   ├── interest_by_province.csv
