@@ -1,4 +1,4 @@
-# Bubble Tea Signals
+# Canadian Bubble Tea Market Trend Dashboard
 
 An interactive market-intelligence dashboard for exploring how Canadians search for leading bubble tea brands.
 
