@@ -40,9 +40,8 @@ function styleAxis(axis, showSplitLine) {
     };
 }
 
-function createChart(elementId, option) {
-    const chart = echarts.init(document.getElementById(elementId));
-    chart.setOption({
+function withChartDefaults(option) {
+    return {
         ...option,
         animationDuration: 650,
         animationEasing: "cubicOut",
@@ -67,7 +66,12 @@ function createChart(elementId, option) {
         },
         xAxis: styleAxis(option.xAxis, option.xAxis?.type === "value"),
         yAxis: styleAxis(option.yAxis, option.yAxis?.type === "value")
-    });
+    };
+}
+
+function createChart(elementId, option) {
+    const chart = echarts.init(document.getElementById(elementId));
+    chart.setOption(withChartDefaults(option));
     charts.push(chart);
     return chart;
 }
@@ -162,6 +166,116 @@ function renderMonthly(monthly, brands, months) {
             })
         }))
     });
+}
+
+let seasonalChart;
+
+function seasonForMonth(month) {
+    const monthNumber = Number(month.slice(5, 7));
+    if ([12, 1, 2].includes(monthNumber)) return "Winter";
+    if ([3, 4, 5].includes(monthNumber)) return "Spring";
+    if ([6, 7, 8].includes(monthNumber)) return "Summer";
+    return "Fall";
+}
+
+function renderSeasonality(monthly, brands, view = "grouped") {
+    const seasons = ["Winter", "Spring", "Summer", "Fall"];
+    const compact = window.innerWidth <= 560;
+    const seasonalValues = {};
+
+    brands.forEach(brand => {
+        seasonalValues[brand] = {};
+        seasons.forEach(season => {
+            const values = monthly
+                .filter(row => row.brand === brand && seasonForMonth(row.month) === season)
+                .map(row => row.interest);
+            seasonalValues[brand][season] = Number(average(values).toFixed(1));
+        });
+    });
+
+    const seasonTotals = seasons.map(season => brands.reduce(
+        (total, brand) => total + seasonalValues[brand][season],
+        0
+    ));
+    const strongestSeasonIndex = seasonTotals.indexOf(Math.max(...seasonTotals));
+    const strongestSeason = seasons[strongestSeasonIndex];
+    const strongestBrand = [...brands].sort(
+        (a, b) => seasonalValues[b][strongestSeason] - seasonalValues[a][strongestSeason]
+    )[0];
+
+    setInsight(
+        "seasonal-insight",
+        `Combined average interest across the five brands is highest in ${strongestSeason.toLowerCase()}, led by ${strongestBrand}.`
+    );
+
+    const isStacked = view === "stacked";
+    const option = {
+        color: brands.map(brand => brandColors[brand]),
+        tooltip: {
+            trigger: "axis",
+            axisPointer: { type: "shadow" },
+            valueFormatter: value => `${value.toFixed(1)} index`
+        },
+        legend: { top: 4, data: brands },
+        grid: { left: 36, right: 18, top: compact ? 72 : 58, bottom: 32, containLabel: true },
+        xAxis: { type: "category", data: seasons, axisLabel: { fontSize: compact ? 9 : 10 } },
+        yAxis: {
+            type: "value",
+            name: compact ? "" : (isStacked ? "Combined interest" : "Average interest"),
+            min: 0,
+            axisLabel: { formatter: value => value }
+        },
+        series: isStacked
+            ? [
+                ...brands.map(brand => ({
+                    name: brand,
+                    type: "bar",
+                    stack: "season-total",
+                    barMaxWidth: 82,
+                    emphasis: { focus: "series" },
+                    label: {
+                        show: true,
+                        position: "inside",
+                        color: "#ffffff",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        formatter: params => params.value >= 5 ? params.value.toFixed(1) : ""
+                    },
+                    data: seasons.map(season => seasonalValues[brand][season])
+                })),
+                {
+                    name: "Season total",
+                    type: "bar",
+                    barGap: "-100%",
+                    barMaxWidth: 82,
+                    silent: true,
+                    tooltip: { show: false },
+                    itemStyle: { color: "transparent" },
+                    label: {
+                        show: true,
+                        position: "top",
+                        color: "#4c3c72",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        formatter: params => params.value.toFixed(1)
+                    },
+                    data: seasonTotals.map(value => Number(value.toFixed(1)))
+                }
+            ]
+            : brands.map(brand => ({
+                name: brand,
+                type: "bar",
+                barMaxWidth: 38,
+                emphasis: { focus: "series" },
+                data: seasons.map(season => seasonalValues[brand][season])
+            }))
+    };
+
+    if (seasonalChart) {
+        seasonalChart.setOption(withChartDefaults(option), true);
+    } else {
+        seasonalChart = createChart("chart-seasonal", option);
+    }
 }
 
 function renderYearOverYear(monthly, brands, months) {
@@ -465,6 +579,17 @@ Promise.all([
 
     renderCards(weekly, monthly, brands, months);
     renderMonthly(monthly, brands, months);
+    renderSeasonality(monthly, brands);
+    document.querySelectorAll("[data-season-view]").forEach(button => {
+        button.addEventListener("click", () => {
+            document.querySelectorAll("[data-season-view]").forEach(item => {
+                const isActive = item === button;
+                item.classList.toggle("active", isActive);
+                item.setAttribute("aria-pressed", String(isActive));
+            });
+            renderSeasonality(monthly, brands, button.dataset.seasonView);
+        });
+    });
     renderYearOverYear(monthly, brands, months);
     renderPeakPeriods(monthly, brands, months);
     renderAcceleration(monthly, brands, months);

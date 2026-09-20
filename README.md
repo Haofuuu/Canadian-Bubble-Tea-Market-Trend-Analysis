@@ -1,13 +1,14 @@
 # Canadian Bubble Tea Market Trend Dashboard
 
-An interactive market-intelligence dashboard for exploring how Canadians search for leading bubble tea brands.
+An interactive dashboard for comparing Canadian Google search interest across leading bubble tea brands.
 
-Bubble Tea Signals turns Google Trends data into a focused view of brand demand, momentum, peak periods, and regional fit. It currently compares **Chatime, Gong Cha, CoCo Fresh Tea & Juice, Molly Tea, and HEYTEA** across 193 weeks of national data, with additional province- and city-level views.
+The dashboard turns Google Trends data into a focused view of brand interest, seasonality, momentum, peak periods, and regional patterns. It compares **Chatime, Gong Cha, CoCo Fresh Tea & Juice, Molly Tea, and HEYTEA** across 193 weeks of national data, with additional province- and city-level views.
 
 ## What the dashboard shows
 
-- **Executive snapshot** — overall leader, current leader, fastest-growing brand, and highest-interest week
+- **Key indicators** — overall leader, current leader, fastest-growing brand, and highest-interest week
 - **National demand trend** — monthly search-interest movement across all five brands
+- **Seasonal comparison** — switch between grouped brand bars and four stacked seasonal totals while retaining each brand's contribution
 - **Year-over-year growth** — rolling three-month performance against the same period one year earlier
 - **Peak-period analysis** — each brand's strongest sustained three-month window
 - **Recent acceleration** — whether short-term momentum is improving or slowing
@@ -89,7 +90,7 @@ The Flask app exposes the normalized dataset through a small read-only API:
 
 ## Interpreting the data
 
-Google Trends scores measure **relative search interest** on a normalized 0–100 scale. They do not represent sales, market share, absolute search volume, or unaided brand awareness. Geographic comparisons are also normalized within their own result set, so the dashboard is best used to identify directional patterns rather than estimate market size.
+Google Trends scores measure **relative search interest** on a normalized 0–100 scale. They do not represent sales, market share, absolute search volume, or unaided brand awareness. Geographic comparisons are normalized within their own result set, so the dashboard is best used to identify directional patterns rather than estimate market size.
 
 ## Data source
 

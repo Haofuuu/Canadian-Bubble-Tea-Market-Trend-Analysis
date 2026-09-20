@@ -4,32 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="An interactive analysis of Google search interest for five leading bubble tea brands across Canada.">
-    <title>Bubble Tea Signals | Canadian Market Intelligence</title>
+    <title>Canadian Bubble Tea Market Trend Analysis</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
 <body>
     <header class="site-header">
-        <div class="header-inner">
-            <div class="brand-lockup" aria-label="Bubble Tea Signals">
-                <div class="brand-mark" aria-hidden="true">
-                    <span></span><span></span><span></span>
-                </div>
-                <div>
-                    <p class="brand-name">Bubble Tea Signals</p>
-                    <p class="brand-subtitle">Canadian market intelligence</p>
-                </div>
-            </div>
-            <div class="header-status">
-                <span class="status-dot" aria-hidden="true"></span>
-                Data through August 2026
-            </div>
-        </div>
-
         <div class="hero">
             <div class="hero-copy">
-                <p class="eyebrow">Search demand · Brand momentum · Regional fit</p>
-                <h1>A clearer view of Canada’s bubble tea market.</h1>
+                <h1>Canadian Bubble Tea Market Trend Analysis</h1>
                 <p class="hero-description">
                     Compare consumer interest across five fast-moving brands and uncover the shifts,
                     peaks, and regional signals shaping the category.
@@ -53,15 +36,7 @@
     </header>
 
     <main class="container">
-        <section class="section-block" aria-labelledby="snapshot-heading">
-            <div class="section-heading">
-                <div>
-                    <p class="section-kicker">Executive snapshot</p>
-                    <h2 id="snapshot-heading">Market leaders at a glance</h2>
-                </div>
-                <p class="section-description">The latest signals from national search interest.</p>
-            </div>
-
+        <section class="section-block snapshot-section" aria-label="Market snapshot">
             <div class="kpi-row">
                 <article class="kpi-card kpi-purple" id="kpi-overall">
                     <div class="kpi-topline"><span class="kpi-label">Overall leader</span><span class="kpi-index">01</span></div>
@@ -88,20 +63,11 @@
 
         <div id="dashboard-error" class="error-message" role="alert" hidden></div>
 
-        <section class="section-block" aria-labelledby="performance-heading">
-            <div class="section-heading">
-                <div>
-                    <p class="section-kicker">Performance</p>
-                    <h2 id="performance-heading">How brand demand is changing</h2>
-                </div>
-                <p class="section-description">National trend, growth, and timing signals.</p>
-            </div>
-
+        <section class="section-block" aria-label="Brand performance">
             <div class="chart-grid">
                 <article class="chart-card span-full">
                     <div class="chart-header">
                         <div>
-                            <p class="chart-kicker">National trend</p>
                             <h3>Monthly search interest</h3>
                             <p class="chart-note">Monthly average of weekly Google Trends scores</p>
                         </div>
@@ -113,7 +79,21 @@
                 <article class="chart-card span-full">
                     <div class="chart-header">
                         <div>
-                            <p class="chart-kicker">Growth trajectory</p>
+                            <h3>Seasonal brand interest</h3>
+                            <p class="chart-note">Average monthly interest by meteorological season across all available years</p>
+                        </div>
+                        <div class="view-toggle" role="group" aria-label="Seasonal chart view">
+                            <button class="view-toggle-button active" type="button" data-season-view="grouped" aria-pressed="true">Grouped</button>
+                            <button class="view-toggle-button" type="button" data-season-view="stacked" aria-pressed="false">Stacked totals</button>
+                        </div>
+                    </div>
+                    <p id="seasonal-insight" class="chart-insight">--</p>
+                    <div id="chart-seasonal" class="chart-box"></div>
+                </article>
+
+                <article class="chart-card span-full">
+                    <div class="chart-header">
+                        <div>
                             <h3>Year-over-year brand growth</h3>
                             <p class="chart-note">Rolling three-month average versus the same period one year earlier</p>
                         </div>
@@ -126,7 +106,6 @@
                 <article class="chart-card span-full">
                     <div class="chart-header">
                         <div>
-                            <p class="chart-kicker">Peak demand</p>
                             <h3>Strongest sustained period</h3>
                             <p class="chart-note">Best three-month average observed for each brand</p>
                         </div>
@@ -139,7 +118,6 @@
                 <article class="chart-card">
                     <div class="chart-header">
                         <div>
-                            <p class="chart-kicker">Momentum</p>
                             <h3>Recent acceleration</h3>
                             <p class="chart-note">Latest three-month change versus the preceding change</p>
                         </div>
@@ -151,7 +129,6 @@
                 <article class="chart-card">
                     <div class="chart-header">
                         <div>
-                            <p class="chart-kicker">Market fit</p>
                             <h3>Regional over-indexing</h3>
                             <p class="chart-note">Provincial brand share versus national mix; 1.0 is the baseline</p>
                         </div>
@@ -162,19 +139,10 @@
             </div>
         </section>
 
-        <section class="section-block" aria-labelledby="regional-heading">
-            <div class="section-heading">
-                <div>
-                    <p class="section-kicker">Regional detail</p>
-                    <h2 id="regional-heading">Where each brand resonates</h2>
-                </div>
-                <p class="section-description">City-level distribution of relative search interest.</p>
-            </div>
-
+        <section class="section-block" aria-label="City-level brand interest">
             <article class="chart-card">
                 <div class="chart-header">
                     <div>
-                        <p class="chart-kicker">Local demand</p>
                         <h3>City-by-brand interest</h3>
                         <p class="chart-note">Cities with measurable interest for at least three brands</p>
                     </div>
@@ -184,27 +152,11 @@
             </article>
         </section>
 
-        <aside class="methodology" aria-labelledby="methodology-heading">
-            <div>
-                <p class="section-kicker">How to read this dashboard</p>
-                <h2 id="methodology-heading">Directional signal, not market share</h2>
-            </div>
-            <p>
-                Google Trends values are normalized within each comparison. They indicate relative
-                search interest—not sales, absolute search volume, or brand awareness.
-            </p>
-        </aside>
+        <p class="methodology">
+            Google Trends values are normalized within each comparison and indicate relative search
+            interest—not sales, absolute search volume, or brand awareness.
+        </p>
     </main>
-
-    <footer class="footer">
-        <div class="footer-inner">
-            <div class="footer-brand">
-                <div class="brand-mark brand-mark-small" aria-hidden="true"><span></span><span></span><span></span></div>
-                <span>Bubble Tea Signals</span>
-            </div>
-            <p>Built with Flask, Apache ECharts, and Google Trends data.</p>
-        </div>
-    </footer>
 
     <script src="/js/charts.js"></script>
 </body>
